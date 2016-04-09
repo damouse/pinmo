@@ -8,33 +8,23 @@ import (
 	"bufio"
 	"fmt"
 	"net"
-
-	"github.com/exis-io/core"
 )
 
 func main() {
 	listener, _ := net.Listen("tcp", ":9876")
-	fmt.Println("Server started. Reflected package interface: ", main.Types)
-
-	fmt.Println(core.Types)
+	fmt.Println("Server started. Reflected package interface: ")
 
 	for {
 		conn, _ := listener.Accept()
-		fmt.Println("Someone joined!")
-
+		fmt.Println("Someone connected")
 		writer := bufio.NewWriter(conn)
 		reader := bufio.NewReader(conn)
 
 		go func() {
 			line, _ := reader.ReadString('\n')
-
-			// func Unmarshal(data []byte, v interface{}) error
-
-			fmt.Println("Read: ", line)
-			fmt.Println("Writing: Hey, client!")
-
-			writer.WriteString("Hey, client!\n")
-			writer.WriteString("null")
+			fmt.Println("Received: ", line)
+			writer.WriteString("Go: Hey client!\n")
+			writer.Flush()
 		}()
 	}
 }

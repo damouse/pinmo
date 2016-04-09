@@ -25,14 +25,9 @@ public class Main {
         log("Starting the client");
 
         MrsFrizzle f = new MrsFrizzle("localhost", 9876);
+        f.send("Java: Hi!\n");
 
-
-        // Goal... but first a messaging bus
-        // Go.call("Bark", 1).then -> result
-
-        // We have inverted control here, so establish an initial callback
-        // No need to thread
-        f.listen();
+        f.run();
     }
 }
 
@@ -61,61 +56,36 @@ class MrsFrizzle {
                 }
 
         };
-
         thread.start();
-
     }
 
     // Spin and listen
-    private void run() {
+    public void run() {
+        BufferedReader d = new BufferedReader(new InputStreamReader(in));
+
         while (true) {
             try {
+                String line = d.readLine();
 
-                // InputStream is = mSocket.getInputStream();
-                // DataInputStream dis = new DataInputStream(new GZIPInputStream(is));
-                String line = in.readLine();
-                Main.log("Have line: " + line);
+                if (line == null)
+                    break;
 
-//                            int len = in.readInt();
-//                            byte[] buff = new byte[len];
-//                            in.readFully(buff);
-//                            String response = new String(buff, "UTF-8");
-//
-                // Data data = new Gson().fromJson(response, Data.class);
-
-//                            String string = "{\"id\":1,\"method\":\"object.deleteAll\",\"params\":[\"subscriber\"]}";
-//
-//                            PrintWriter pw = new PrintWriter(os);
-//                            Main.log("Sent: " + string);
-//                            pw.println(string);
-//                            pw.flush();
-//
-//                            BufferedReader in = new BufferedReader(new InputStreamReader(is));
-//                            String inputLine;
-//
-//                            while ((inputLine = in.readLine()) != null)
-//                                System.out.println(inputLine);
-//
-//                            in.close();
-//                            out.close();
+                System.out.println("Java has: " + line);
 
             } catch (Exception e) {
                 Main.log("Things didnt go well");
                 e.printStackTrace();
             }
         }
+
+        Main.log("Connection lost");
     }
 
-    public void sendResponse(String response) {
-//        OutputStream os = mClientSocket.getOutputStream();
-//        DataOutputStream dos = new DataOutputStream(new GZIPOutputStream(os));
+    public void send(String response) {
         Main.log("Writing " + response);
 
         try {
             out.writeBytes(response);
-//            byte[] buff = response.getBytes("UTF-8");
-//            out.writeInt(buff.length);
-//            out.write(buff);
             out.flush();
         } catch (IOException e) {
             e.printStackTrace();
