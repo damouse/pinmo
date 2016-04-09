@@ -43,6 +43,7 @@ class MrsFrizzle {
     Thread thread;
 
     MrsFrizzle(String host, int port) {
+        Main.log("Connecting to " + host + " " + port);
         try {
             Socket socket = new Socket(InetAddress.getByName(host), port);
             in = new DataInputStream(socket.getInputStream());
@@ -56,16 +57,31 @@ class MrsFrizzle {
     public void listen() {
         thread = new Thread() {
             public void run() {
-                    while (true) {
-                        try {
+                    run();
+                }
 
-                            // InputStream is = mSocket.getInputStream();
-                            // DataInputStream dis = new DataInputStream(new GZIPInputStream(is));
-                            int len = in.readInt();
-                            byte[] buff = new byte[len];
-                            in.readFully(buff);
-                            String response = new String(buff, "UTF-8");
-                            // Data data = new Gson().fromJson(response, Data.class);
+        };
+
+        thread.start();
+
+    }
+
+    // Spin and listen
+    private void run() {
+        while (true) {
+            try {
+
+                // InputStream is = mSocket.getInputStream();
+                // DataInputStream dis = new DataInputStream(new GZIPInputStream(is));
+                String line = in.readLine();
+                Main.log("Have line: " + line);
+
+//                            int len = in.readInt();
+//                            byte[] buff = new byte[len];
+//                            in.readFully(buff);
+//                            String response = new String(buff, "UTF-8");
+//
+                // Data data = new Gson().fromJson(response, Data.class);
 
 //                            String string = "{\"id\":1,\"method\":\"object.deleteAll\",\"params\":[\"subscriber\"]}";
 //
@@ -83,27 +99,23 @@ class MrsFrizzle {
 //                            in.close();
 //                            out.close();
 
-                        } catch (Exception e) {
-                            Main.log("Things didnt go well");
-                            e.printStackTrace();
-                        }
-                    }
-                }
-
-        };
-
-        thread.start();
-
+            } catch (Exception e) {
+                Main.log("Things didnt go well");
+                e.printStackTrace();
+            }
+        }
     }
 
     public void sendResponse(String response) {
 //        OutputStream os = mClientSocket.getOutputStream();
 //        DataOutputStream dos = new DataOutputStream(new GZIPOutputStream(os));
+        Main.log("Writing " + response);
 
         try {
-            byte[] buff = response.getBytes("UTF-8");
-            out.writeInt(buff.length);
-            out.write(buff);
+            out.writeBytes(response);
+//            byte[] buff = response.getBytes("UTF-8");
+//            out.writeInt(buff.length);
+//            out.write(buff);
             out.flush();
         } catch (IOException e) {
             e.printStackTrace();
