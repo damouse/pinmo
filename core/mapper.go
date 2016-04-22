@@ -56,7 +56,7 @@ func Handle(line string) {
 	} else if m, ok := core.Types[n.target]; ok {
 		fmt.Printf("Types %v\n", m)
 	} else if m, ok := core.Consts[n.target]; ok {
-		result = m.Elem()
+		result = m.Interface()
 	} else if m, ok := core.Functions[n.target]; ok {
 		fmt.Printf("Functions %v\n", m)
 		// r := m.Call(n.args)

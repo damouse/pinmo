@@ -3,5 +3,5 @@ package main
 import mantle ".."
 
 func main() {
-	mantle.Handle(`["CuminLevel", 10, 11, null]`)
+	mantle.Handle(`["CuminStrict", 10, 11, null]`)
 }
