@@ -58,9 +58,14 @@ func Handle(line string) {
 	} else if m, ok := core.Consts[n.target]; ok {
 		result = m.Interface()
 	} else if m, ok := core.Functions[n.target]; ok {
-		fmt.Printf("Functions %v\n", m)
-		// r := m.Call(n.args)
-		// fmt.Printf("Result: %v\n", r)
+		var err error
+		result, err = handleFunction(m, n.args)
+
+		if err != nil {
+			resultingId = n.eb
+		} else {
+			resultingId = n.cb
+		}
 	} else {
 		fmt.Println("Unknown!")
 	}
@@ -71,8 +76,8 @@ func Handle(line string) {
 // Assign the given value to a variable and return its value. If we are passed "nil" as a
 // new value this is just a read-- dont try and set the value. Obviously this means nil is
 // not allowed as a variable value.
+// TODO: handle bad type conversions
 func handleVariable(v reflect.Value, n interface{}) interface{} {
-	// Note: this will panic on bad type conversions, please check!
 	if n != nil {
 		c := reflect.ValueOf(n).Convert(v.Elem().Type())
 		v.Elem().Set(c)
@@ -85,7 +90,11 @@ func handleType() (interface{}, error) {
 	return nil, nil
 }
 
-func handleFunction() (interface{}, error) {
+func handleFunction(fn reflect.Value, args interface{}) (interface{}, error) {
+	if argsList, ok := args.([]interface{}); !ok {
+		return nil, fmt.Errorf("Function invocations require a list of arguments!")
+	}
+
 	return nil, nil
 }
 
