@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"reflect"
+	"strings"
 
 	"github.com/exis-io/core"
 )
@@ -32,10 +33,11 @@ import (
 var memory = make(map[uint64]interface{})
 
 type invocation struct {
-	target string      // A type, function, variable, or constant
-	cb     uint64      // The callback id to deliver the result on
-	eb     uint64      // errback id to deliver failure on
-	args   interface{} // Arguments to pass to the target
+	target  string      // A type, function, variable, or constant
+	cb      uint64      // The callback id to deliver the result on
+	eb      uint64      // errback id to deliver failure on
+	address uint64      // multiple-use field: "Pointer" when dealing with types, handler id for domain operations
+	args    interface{} // Arguments to pass to the target
 }
 
 func Handle(line string) {
@@ -46,23 +48,35 @@ func Handle(line string) {
 		return
 	}
 
-	fmt.Println("Received: ", n)
-
 	var result interface{}
 	var resultingId = n.cb
 
+	// Note: Types are used only for the sake of method reading-- instantiate types through their
+	// public constructors!
+
 	if m, ok := core.Variables[n.target]; ok {
 		result = handleVariable(m, n.args)
-	} else if m, ok := core.Types[n.target]; ok {
-		fmt.Printf("Types %v\n", m)
 	} else if m, ok := core.Consts[n.target]; ok {
 		result = m.Interface()
 	} else if m, ok := core.Functions[n.target]; ok {
-		var err error
-		result, err = handleFunction(m, n.args)
-
-		if err != nil {
+		if ret, err := handleFunction(m, n.args); err != nil {
 			resultingId = n.eb
+			result = err.Error()
+		} else {
+			if handleConstructor(n.target, n.address, ret) {
+				result = n.address
+			}
+
+			result = ret
+			resultingId = n.cb
+		}
+	} else if m, ok := memory[n.address]; ok {
+		v := reflect.ValueOf(m).MethodByName(n.target)
+
+		var err error
+		if result, err = handleFunction(v, n.args); err != nil {
+			resultingId = n.eb
+			result = err.Error()
 		} else {
 			resultingId = n.cb
 		}
@@ -86,19 +100,35 @@ func handleVariable(v reflect.Value, n interface{}) interface{} {
 	return v.Elem()
 }
 
-func handleType() (interface{}, error) {
-	return nil, nil
-}
-
-func handleFunction(fn reflect.Value, args interface{}) (interface{}, error) {
+func handleFunction(fn reflect.Value, args interface{}) ([]interface{}, error) {
 	if argsList, ok := args.([]interface{}); !ok {
 		return nil, fmt.Errorf("Function invocations require a list of arguments!")
+	} else {
+		return core.Cumin(fn.Interface(), argsList)
 	}
-
-	return nil, nil
 }
 
-func handleObject() (interface{}, error) {
+// Checks to see if a function invocation instantiated an object by checking the string of the target.
+// By convention constructors must be named "New[TypeName]" and return pointers.
+// If found and memory has been allocated for the given pointer, return true
+func handleConstructor(target string, address uint64, invocationResult []interface{}) bool {
+	if len(invocationResult) != 1 {
+		return false
+	}
+
+	if strings.Index(target, "New") != -1 {
+		split := strings.Split(target, "New")
+
+		if len(split) == 2 && split[0] == "" {
+			memory[address] = invocationResult[0]
+			return true
+		}
+	}
+
+	return false
+}
+
+func handleObject(t reflect.Value) (interface{}, error) {
 	return nil, nil
 }
 
@@ -133,11 +163,17 @@ func deserialize(j string) (*invocation, error) {
 		n.eb = uint64(s)
 	}
 
-	if s, ok := d[3].(interface{}); !ok {
-		if d[3] == nil {
+	if s, ok := d[3].(float64); !ok {
+		return nil, fmt.Errorf("Couldn't parse message-- incorrect type at position 3. Got %v", d[2])
+	} else {
+		n.address = uint64(s)
+	}
+
+	if s, ok := d[4].(interface{}); !ok {
+		if d[4] == nil {
 			n.args = nil
 		} else {
-			return nil, fmt.Errorf("Couldn't parse message-- incorrect type at position 3. Got %v", d[3])
+			return nil, fmt.Errorf("Couldn't parse message-- incorrect type at position 4. Got %v", d[3])
 		}
 	} else {
 		n.args = s
