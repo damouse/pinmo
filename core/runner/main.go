@@ -1,7 +1,7 @@
 package main
 
-import _ "github.com/damouse/pinmo/core"
+import mantle ".."
 
 func main() {
-
+	mantle.Handle(`["CuminLevel", 10, 11, null]`)
 }
