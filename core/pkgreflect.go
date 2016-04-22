@@ -16,7 +16,7 @@ Command line usage:
 If -norecurs is not set, then pkgreflect traverses recursively into sub-directories.
 If no DIR_NAME is given, then the current directory is used as root.
 */
-package main
+package mantle
 
 // See here for information on getting interface info: https://golang.org/src/go/ast/ast.go
 
