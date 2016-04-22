@@ -56,7 +56,7 @@ func Handle(line string) {
 	} else if m, ok := core.Types[n.target]; ok {
 		fmt.Printf("Types %v\n", m)
 	} else if m, ok := core.Consts[n.target]; ok {
-		fmt.Printf("Consts %v\n", m)
+		result = m.Elem()
 	} else if m, ok := core.Functions[n.target]; ok {
 		fmt.Printf("Functions %v\n", m)
 		// r := m.Call(n.args)
@@ -85,10 +85,6 @@ func handleType() (interface{}, error) {
 	return nil, nil
 }
 
-func handleConst() (interface{}, error) {
-	return nil, nil
-}
-
 func handleFunction() (interface{}, error) {
 	return nil, nil
 }
@@ -99,7 +95,7 @@ func handleObject() (interface{}, error) {
 
 // Dispatch a callback to the given session
 func dispatch(id uint64, arg interface{}) {
-	fmt.Printf("Dispatching %d %v", id, arg)
+	fmt.Printf("Dispatching %d %v\n", id, arg)
 }
 
 func deserialize(j string) (*invocation, error) {
